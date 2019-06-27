@@ -1,0 +1,7 @@
+http://arduino.esp8266.com/stable/package_esp8266com_index.json
+
+
+http://arduino.esp8266.com/stable/package_esp8266com_index.json
+
+https://randomnerdtutorials.com/esp8266-and-node-red-with-mqtt/
+https://www.arduinolab.net/mqtt-node-with-arduino-uno-and-w5100-ethernet-shield/
