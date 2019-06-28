@@ -100,6 +100,7 @@ void setup()
 void initSerial() 
 {
     Serial.begin(115200);
+    dht.begin();
 }
  
 //Função: inicializa e conecta-se na rede WI-FI desejada
