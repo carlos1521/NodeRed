@@ -7,7 +7,8 @@
  
 //defines:
 //defines de id mqtt e tópicos para publicação e subscribe
-#define TOPICO_SUBSCRIBE "MQTTFilipeFlopEnvia"     //tópico MQTT de escuta
+//#define TOPICO_SUBSCRIBE "MQTTFilipeFlopEnvia"     //tópico MQTT de escuta
+#define TOPICO_SUBSCRIBE "vaso/set"            //aciona lampada
 
 #define PUBLISH_DELAY 3000                       // Publishing delay [ms]
 
@@ -15,6 +16,8 @@
 #define TOPICO_PUB_SOIL   "vaso/smo"     //umidade do solo
 #define TOPICO_PUB_LUM   "vaso/lum"    //luminozidade
 #define TOPICO_PUB_ARH   "vaso/arh"  // Umidade do ar
+
+#define TOPICO_PUB_PIR   "vaso/pir"  // presença
 
                                                    //IMPORTANTE: recomendamos fortemente alterar os nomes
                                                    //            desses tópicos. Caso contrário, há grandes
@@ -42,6 +45,9 @@
 #define D10   1
 
 const int sensorPin = D3; //dht
+const int lamp = D5;
+const int pir = D6;
+const int pimp = D7;
 long previousMillis;
 
 DHT dht(sensorPin, DHT11);
@@ -76,6 +82,7 @@ char EstadoSaida = '0';  //variável que armazena o estado atual da saída
 void initSerial();
 void initWiFi();
 void initMQTT();
+void InitInput();
 void reconectWiFi(); 
 void mqtt_callback(char* topic, byte* payload, unsigned int length);
 void VerificaConexoesWiFIEMQTT(void);
@@ -88,6 +95,7 @@ void setup()
 {
     //inicializações:
     InitOutput();
+    InitInput();
     initSerial();
     initWiFi();
     initMQTT();
@@ -134,7 +142,7 @@ void initMQTT()
 //Retorno: nenhum
 void mqtt_callback(char* topic, byte* payload, unsigned int length) 
 {
-  /*
+  
     String msg;
  
     //obtem a string do payload recebido
@@ -148,19 +156,32 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length)
     //verifica se deve colocar nivel alto de tensão na saída D0:
     //IMPORTANTE: o Led já contido na placa é acionado com lógica invertida (ou seja,
     //enviar HIGH para o output faz o Led apagar / enviar LOW faz o Led acender)
-    if (msg.equals("L"))
+    if (msg.equals("lon"))
     {
-        digitalWrite(D0, LOW);
-        EstadoSaida = '1';
+        digitalWrite(lamp, HIGH);
+    }
+
+    if (msg.equals("loff"))
+    {
+        digitalWrite(lamp, LOW);
     }
  
-    //verifica se deve colocar nivel alto de tensão na saída D0:
+    if (msg.equals("pimp"))
+    {
+        digitalWrite(pimp, HIGH);
+        delay(5000);
+        digitalWrite(pimp, LOW);
+    }
+
+    
+ 
+/*    //verifica se deve colocar nivel alto de tensão na saída D0:
     if (msg.equals("D"))
     {
         digitalWrite(D0, HIGH);
         EstadoSaida = '0';
     }
-     */
+*/    
 }
   
 //Função: reconecta-se ao broker MQTT (caso ainda não esteja conectado ou em caso de a conexão cair)
@@ -269,6 +290,10 @@ void EnviaEstadoOutputMQTT(void)
     
     digitalWrite(D0,LOW);
     MQTT.publish(TOPICO_PUB_LUM, dtostrf((analogRead(A0) * 100)/1023, 6, 2, tmpBuffer));
+
+    if(digitalRead(pir) == HIGH){
+      MQTT.publish(TOPICO_PUB_PIR, "1");
+    }
     
     //MQTT.publish(TOPICO_PUBLISH, /*dtostrf(analogRead (A0), 6, 2, tmpBuffer)*/ itoa(analogRead (A0), tmpBuffer,20));
     
@@ -285,7 +310,18 @@ void InitOutput(void)
     //IMPORTANTE: o Led já contido na placa é acionado com lógica invertida (ou seja,
     //enviar HIGH para o output faz o Led apagar / enviar LOW faz o Led acender)
     pinMode(D0, OUTPUT);
-    digitalWrite(D0, HIGH);          
+    digitalWrite(D0, HIGH);     
+
+    pinMode(lamp, OUTPUT);
+    digitalWrite(lamp, LOW);
+
+    pinMode(pimp, OUTPUT);
+    digitalWrite(pimp, LOW);
+}
+
+void InitInput(){
+
+    pinMode(pir, INPUT); 
 }
  
 //programa principal
